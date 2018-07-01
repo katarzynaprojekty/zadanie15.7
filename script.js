@@ -1,22 +1,30 @@
-class Stopwatch {
-    constructor(display) {
-        this.running = false;
-        this.display = display;
-        this.reset();
-        this.print(this.times);
+class Stopwatch extends React.Component {
+    constructor(props) {
+		super(props);
+		this.state = {
+			running: false,
+			time: {
+				minutes: 0,
+				seconds: 0,
+				miliseconds: 0
+			},
+			resultList: []
+		}
     }
 	start() {
-		if (!this.running) {
-			this.running = true;
+		if (!this.state.running) {
+			this.set({
+				running: true
+			});
 			this.watch = setInterval(() => this.step(), 10);
 		}
 	}
 	step() {
-		if (!this.running) return;
+		if (!this.state.running) return;
 		this.calculate();
-		this.print();
 	}
 	calculate() {
+		let {minutes, secons, miliseconds} = this.state.times;
 		this.times.miliseconds += 1;
 		if (this.times.miliseconds >= 100) {
 			this.times.seconds += 1;
@@ -28,64 +36,73 @@ class Stopwatch {
 		}
 	}
 	stop() {
-		this.running = false;
-		clearInterval(this.watch);
+		if(this.state.running){
+			this.set({
+				running: false
+			});
+			clearInterval(this.watch);
+		}		
 	}
     reset() {
-        this.times = {
-            minutes: 0,
-            seconds: 0,
-            miliseconds: 0
-        };
+		this.set({
+			times: {
+				minutes: 0,
+				second: 0,
+				millisecond: 0
+			}
+		});
     }	
 	resetCount() {
-		this.reset();
-		this.print();
+		if (this.state.running){
+			this.reset();
+		}	
 	}
 	print() {
-        this.display.innerText = this.format(this.times);
+        this.display.innerText = this.state.times;
 	}		
 	format(times) {
         return `${pad0(times.minutes)}:${pad0(times.seconds)}:${pad0(Math.floor(times.miliseconds))}`;
 	}
 	save() {
-        this.addTimeToList(this.format(this.times), resultList);
+        this.addTimeToList(this.state.times);
     }
-	addTimeToList(time, resultList) {
-        let element = document.createElement('li');
-        element.innerText = time;
-        resultList.appendChild(element);
+	addTimeToList(time) {
+        this.setState((prevState, props) => ({
+            resultList: [...prevState.resultList, {'time': time, 'id': new Date().getTime()}]
+        }));
     }
 
 	clear() {	
 		return resultList.innerText = '';
 	}
-}
 
-const stopwatch = new Stopwatch(
-document.querySelector('.stopwatch'));
+	pad0(value) {
+		let result = value.toString();
+		if (result.length < 2) {
+			result = '0' + result;
+		}
+		return result;
+	}
 
-let startButton = document.getElementById('start');
-startButton.addEventListener('click', () => stopwatch.start());
-
-let stopButton = document.getElementById('stop');
-stopButton.addEventListener('click', () => stopwatch.stop());
-
-var resetButton = document.getElementById('reset');
-resetButton.addEventListener('click', () => stopwatch.resetCount());
-
-var saveButton = document.getElementById('save');
-saveButton.addEventListener('click', () => stopwatch.save());
-
-var clearButton = document.getElementById('clear');
-clearButton.addEventListener('click', () => stopwatch.clear());
-
-function pad0(value) {
-    let result = value.toString();
-    if (result.length < 2) {
-        result = '0' + result;
+    render() {
+        return (
+            <div>
+                <div className='controls'>
+                    <a href='#' className='button' onClick={this.start.bind(this)}>Start</a>
+                    <a href='#' className='button' onClick={this.stop.bind(this)}>Stop</a>
+                    <a href='#' className='button' onClick={this.zero.bind(this)}>Reset</a>
+                    <a href='#' className='button' onClick={this.save.bind(this)}>Save</a>
+                    <a href='#' className='button' onClick={this.clear.bind(this)}>Clear</a>
+                </div>
+                <div>{this.format(this.state.times)}</div>
+                <ol className="results">
+                    {this.state.resultList.map(item => <li key={item.id}>{item.time}</li>)}
+                </ol>
+            </div>
+        );
     }
-    return result;
 }
 
-var resultList = document.querySelector('.results');
+
+
+ReactDOM.render(<Stopwatch/>, document.querySelector('.stopwatch'));
